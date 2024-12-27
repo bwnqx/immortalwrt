@@ -1,41 +1,42 @@
 #!/bin/sh
-
-# 获取无线设备的数量
-RADIO_NUM=$(uci show wireless | grep -c "wifi-device")
-
-# 如果没有找到无线设备，直接退出
-if [ "$RADIO_NUM" -eq 0 ]; then
-	exit 0
-fi
+. /usr/share/libubox/jshn.sh
 
 # 默认WIFI设置
 BASE_SSID='OWRT'
 BASE_WORD='12345678'
 
-# 配置无线设备
+# 获取无线设备的数量
+RADIO_NUM=$(uci show wireless | grep -c "wifi-device")
+
+# 如果没有找到无线设备，直接退出
+[ "$RADIO_NUM" -eq 0 ] && exit 0
+
+# 配置参数
 configure_wifi() {
 	local radio=$1
 	local channel=$2
-	local ssid=$3
-	local key=$4
-	local now_encryption=$(uci get wireless.default_radio${radio}.encryption)
+	local htmode=$3
+	local ssid=$4
+	local current_encryption=$(uci get wireless.default_radio${radio}.encryption)
 
 	# 如果当前加密方式已设置且不为"none"，则不更新配置
-	if [ -n "$now_encryption" ] && [ "$now_encryption" != "none" ]; then
-		echo "no update $channel $ssid $key"
+	if [ -n "$current_encryption" ] && [ "$current_encryption" != "none" ]; then
+		echo "No update needed for radio${radio} with channel ${channel} and SSID ${ssid}"
 		return 0
 	fi
 
 	# 设置无线设备参数
-	uci set wireless.radio${radio}.channel="${channel}"
+
+	uci set wireless.radio${radio}.channel=${channel}
+	uci set wireless.radio${radio}.htmode=${htmode}
 	uci set wireless.radio${radio}.country='CN'
 	uci set wireless.radio${radio}.disabled='0'
 	uci set wireless.radio${radio}.cell_density='0'
 	uci set wireless.radio${radio}.mu_beamformer='1'
 
-	uci set wireless.default_radio${radio}.ssid="${ssid}"
+	uci set wireless.default_radio${radio}.ssid=${ssid}
 	uci set wireless.default_radio${radio}.encryption='psk2+ccmp'
-	uci set wireless.default_radio${radio}.key="${BASE_WORD}"
+	uci set wireless.default_radio${radio}.key=${BASE_WORD}
 	uci set wireless.default_radio${radio}.ieee80211k='1'
 	uci set wireless.default_radio${radio}.time_advertisement='2'
 	uci set wireless.default_radio${radio}.time_zone='CST-8'
@@ -44,33 +45,70 @@ configure_wifi() {
 	uci set wireless.default_radio${radio}.wnm_sleep_mode_no_keys='1'
 }
 
+# 查询mode
+query_mode() {
+	json_load_file "/etc/board.json"
+	json_select wlan
+	json_get_keys phy_keys
+	for phy in $phy_keys; do
+		json_select $phy
+		json_get_var path_value "path"
+		if [ "$path_value" = "$1" ]; then
+			json_select info
+			json_select bands
+			json_get_keys band_keys
+			for band in $band_keys; do
+				json_select $band
+				json_select modes
+				json_get_keys mode_keys
+				for mode in $mode_keys; do
+					json_get_var mode_value $mode
+					last_mode=$mode_value
+				done
+				json_select ..
+				json_select ..
+			done
+			echo "$last_mode"
+			return
+		fi
+		json_select ..
+	done
+}
+
 # 设置无线设备的默认配置
 FIRST_5G=''
 set_wifi_def_cfg() {
-	local band=$(uci get wireless.radio$1.band 2>/dev/null)
+	local band=$(uci get wireless.radio${1}.band)
+	local path=$(uci get wireless.radio${1}.path)
+	local htmode=$(query_mode "$path")
+	local channel=6
+	local WIFI_SSID="$BASE_SSID"
 
-	# 根据频段设置不同的SSID和信道
-	if [[ "$band" == '5g' ]]; then
+	case "$band" in
+	'5g')
+		channel=149
+		[ "$htmode" = 'HE160' ] || [ "$htmode" = 'VHT160' ] && channel=44
 		if [ -z "$FIRST_5G" ]; then
-			if [ $RADIO_NUM -eq 2 ]; then
-				configure_wifi $1 '149' "${BASE_SSID}-5G" '12345678'
-			else
-				configure_wifi $1 '149' "${BASE_SSID}-5G_1" '12345678'
-			fi
-			FIRST_5G="1"
+			[ "$RADIO_NUM" -gt 2 ] && WIFI_SSID="${BASE_SSID}-5G_1" || WIFI_SSID="${BASE_SSID}-5G"
+			FIRST_5G=1
 		else
-			configure_wifi $1 '44' "${BASE_SSID}-5G_2" '12345678'
+			WIFI_SSID="${BASE_SSID}-5G_2"
 		fi
-	else
-		configure_wifi $1 '1' "${BASE_SSID}" '12345678'
-	fi
+		;;
+	*)
+		case "$htmode" in
+		'HT40' | 'VHT40' | 'HE40')
+			htmode="${htmode%40}20"
+			;;
+		esac
+		;;
+	esac
+
+	configure_wifi "$1" "$channel" "$htmode" "$WIFI_SSID"
 }
 
-# 遍历所有无线设备并设置默认配置
-i=0
-while [ $i -lt "$RADIO_NUM" ]; do
-	set_wifi_def_cfg $i
-	i=$((i + 1))
+for i in $(seq 0 $((RADIO_NUM - 1))); do
+	set_wifi_def_cfg "$i"
 done
 
 # 提交配置并重启网络服务
