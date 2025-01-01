@@ -27,7 +27,6 @@ ipq807x_setup_interfaces()
 		ucidef_set_interfaces_lan_wan "lan plc" "wan"
 		;;
 	compex,wpq873|\
-	linksys,homewrk|\
 	linksys,mx4200v1|\
 	linksys,mx4200v2|\
 	linksys,mx4300|\
@@ -36,8 +35,7 @@ ipq807x_setup_interfaces()
 	redmi,ax6-stock|\
 	spectrum,sax1v1k|\
 	xiaomi,ax3600|\
-	xiaomi,ax3600-stock|\
-	verizon,cr1000a)
+	xiaomi,ax3600-stock)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3" "wan"
 		;;
 	aliyun,ap8220|\
@@ -101,11 +99,6 @@ ipq807x_setup_macs()
 		tplink,eap660hd-v1)
 			label_mac=$(get_mac_binary /tmp/factory_data/default-mac 0)
 			lan_mac=$label_mac
-		;;
-		verizon,cr1000a)
-			wan_mac=$(mmc_get_mac_ascii "0:APPSBLENV" baseMAC)
-			lan_mac=$(macaddr_add "$wan_mac" 1)
-			label_mac=$wan_mac
 		;;
 		zte,mf269)
 			wan_mac=$(mtd_get_mac_binary mac 0x0)

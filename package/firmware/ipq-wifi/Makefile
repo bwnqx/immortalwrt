@@ -37,7 +37,6 @@ ALLWIFIBOARDS:= \
 	dynalink_dl-wrx36 \
 	edgecore_eap102 \
 	edimax_cax1800 \
-	linksys_homewrk \
 	linksys_mr7350 \
 	linksys_mx4200 \
 	linksys_mx5300 \
@@ -76,7 +75,6 @@ ALLWIFIBOARDS:= \
 	jdcloud_re-cs-02 \
 	redmi_ax5 \
 	redmi_ax5-jdcloud \
-	verizon_cr1000a \
 	xiaomi_ax1800 \
 	zn_m2
 
@@ -178,7 +176,6 @@ $(eval $(call generate-ipq-wifi-package,compex_wpq873,Compex WPQ-873))
 $(eval $(call generate-ipq-wifi-package,dynalink_dl-wrx36,Dynalink DL-WRX36))
 $(eval $(call generate-ipq-wifi-package,edgecore_eap102,Edgecore EAP102))
 $(eval $(call generate-ipq-wifi-package,edimax_cax1800,Edimax CAX1800))
-$(eval $(call generate-ipq-wifi-package,linksys_homewrk,Linksys HomeWRK))
 $(eval $(call generate-ipq-wifi-package,linksys_mr7350,Linksys MR7350))
 $(eval $(call generate-ipq-wifi-package,linksys_mx4200,Linksys MX4200))
 $(eval $(call generate-ipq-wifi-package,linksys_mx5300,Linksys MX5300))
@@ -217,7 +214,6 @@ $(eval $(call generate-ipq-wifi-package,jdcloud_re-ss-01,JDCloud RE-SS-01))
 $(eval $(call generate-ipq-wifi-package,jdcloud_re-cs-02,JDCloud RE-CS-02))
 $(eval $(call generate-ipq-wifi-package,redmi_ax5,Redmi AX5))
 $(eval $(call generate-ipq-wifi-package,redmi_ax5-jdcloud,Redmi AX5 JDCloud))
-$(eval $(call generate-ipq-wifi-package,verizon_cr1000a,Verizon CR1000A))
 $(eval $(call generate-ipq-wifi-package,xiaomi_ax1800,Xiaomi AX1800))
 $(eval $(call generate-ipq-wifi-package,zn_m2,ZN M2))
 
