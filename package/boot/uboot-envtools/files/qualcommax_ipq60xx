@@ -27,7 +27,8 @@ qihoo,360v6|\
 redmi,ax5|\
 xiaomi,ax1800|\
 zn,m2|\
-netgear,wax214)
+netgear,wax214|\
+tplink,eap610-outdoor)
 	idx="$(find_mtd_index 0:appsblenv)"
 	[ -n "$idx" ] && \
 		ubootenv_add_uci_config "/dev/mtd$idx" "0x0" "0x40000" "0x20000"

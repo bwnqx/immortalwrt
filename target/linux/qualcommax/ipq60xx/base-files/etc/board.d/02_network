@@ -18,7 +18,8 @@ ipq60xx_setup_interfaces()
 	cambiumnetworks,xe3-4)
 		ucidef_set_interface_lan "lan1 lan2" "dhcp"
 		;;
-	netgear,wax214)
+	netgear,wax214|\
+	tplink,eap610-outdoor)
 		ucidef_set_interface_lan "lan" "dhcp"
 		;;
 	cmiot,ax18|\
@@ -60,6 +61,10 @@ ipq60xx_setup_macs()
 		lan_mac=$(mtd_get_mac_ascii factory lanMac)
 		wan_mac=$(macaddr_add "$lan_mac" 1)
 		label_mac=$lan_mac
+		;;
+	tplink,eap610-outdoor)
+		label_mac=$(get_mac_binary /tmp/factory_data/default-mac 0)
+		lan_mac=$label_mac
 		;;
 	esac
 
